@@ -1,0 +1,13 @@
+{
+  "name": "pasumai",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PasumAI - an AI eco helper for The Indian High School",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

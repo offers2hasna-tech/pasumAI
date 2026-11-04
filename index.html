@@ -1,0 +1,834 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>[hidden]{display:none!important} img{max-width:100%} body{margin:0}</style>
+<title>PasumAI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Layout: header (name, school, age mode, my house) → house scoreboard → Chat | Snap & Sort → Log an action | Report a problem. Stacks on phones. */
+:root{
+  --bg:#f2f6ef; --surface:#ffffff; --fg:#17261c; --muted:#5b6b60; --line:#d5e0d3;
+  --leaf:#2f7d4a; --leaf-soft:#e1efe3; --on-leaf:#ffffff; --scrim:rgba(10,20,14,.55);
+  --bin-recycle:#2563a8; --bin-reuse:#2f7d4a; --bin-general:#6b6f6c; --bin-compost:#8a5a2b; --bin-hazard:#b4441f;
+  --h-ruby:#b3223a; --h-emerald:#1f8a4c; --h-topaz:#c98a00; --h-sapphire:#1f5fae;
+  --bubble-me:#2f7d4a; --bubble-me-fg:#ffffff; --bubble-bot:#eef3ec;
+  --display:"Bricolage Grotesque", "Trebuchet MS", system-ui, sans-serif;
+  --body:"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1712; --surface:#17221b; --fg:#e4ede5; --muted:#9aab9f; --line:#2a3a2f;
+  --leaf:#5cbf7c; --leaf-soft:#1f3326; --on-leaf:#0b140e; --scrim:rgba(0,0,0,.65);
+  --bin-recycle:#6ea8e6; --bin-reuse:#5cbf7c; --bin-general:#a3a8a4; --bin-compost:#d39a5f; --bin-hazard:#f08a63;
+  --h-ruby:#f0627a; --h-emerald:#5cc98a; --h-topaz:#f2c14e; --h-sapphire:#6aa5f0;
+  --bubble-me:#2f7d4a; --bubble-me-fg:#ffffff; --bubble-bot:#1f2d24; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1712; --surface:#17221b; --fg:#e4ede5; --muted:#9aab9f; --line:#2a3a2f;
+  --leaf:#5cbf7c; --leaf-soft:#1f3326; --on-leaf:#0b140e; --scrim:rgba(0,0,0,.65);
+  --bin-recycle:#6ea8e6; --bin-reuse:#5cbf7c; --bin-general:#a3a8a4; --bin-compost:#d39a5f; --bin-hazard:#f08a63;
+  --h-ruby:#f0627a; --h-emerald:#5cc98a; --h-topaz:#f2c14e; --h-sapphire:#6aa5f0;
+  --bubble-me:#2f7d4a; --bubble-me-fg:#ffffff; --bubble-bot:#1f2d24; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+.wrap{max-width:1100px;margin:0 auto;display:grid;gap:20px}
+header{display:flex;flex-wrap:wrap;gap:16px;align-items:end;justify-content:space-between}
+.school{margin:0 0 4px;font-size:.8rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:700;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.engine{font-size:.7rem;letter-spacing:.06em;border:1px solid var(--line);border-radius:999px;padding:1px 8px;background:var(--surface)}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);line-height:1;margin:0;letter-spacing:-.02em}
+h1 span{color:var(--leaf)}
+.tag{margin:6px 0 0;color:var(--muted);max-width:52ch}
+h2{font-family:var(--display);font-weight:600;font-size:1.3rem;margin:0;text-wrap:balance}
+.label{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
+.controls{display:grid;gap:8px;justify-items:end}
+@media (max-width:820px){.controls{justify-items:start}}
+.seg{display:flex;flex-wrap:wrap;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px}
+.seg button{border:0;background:transparent;color:var(--fg);font:inherit;font-weight:700;padding:7px 13px;border-radius:999px;cursor:pointer;font-size:.9rem}
+.seg button[aria-pressed="true"]{background:var(--leaf);color:var(--on-leaf)}
+.seg button small{display:block;font-weight:400;font-size:.7rem;opacity:.85}
+.houses button{display:flex;align-items:center;gap:6px}
+.houses button i{width:10px;height:10px;border-radius:50%;background:var(--hc)}
+.houses button[aria-pressed="true"]{background:var(--hc);color:#fff}
+.houses button[aria-pressed="true"] i{background:#fff}
+
+.grid{display:grid;grid-template-columns:1.3fr 1fr;gap:20px;align-items:start}
+.grid.even{grid-template-columns:1fr 1fr}
+@media (max-width:820px){.grid,.grid.even{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:grid;gap:14px;min-width:0;align-content:start}
+.panel-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+
+/* Scoreboard */
+.board{display:grid;grid-template-columns:1.4fr 1fr;gap:24px}
+@media (max-width:820px){.board{grid-template-columns:1fr}}
+.rows{display:grid;gap:14px;align-content:start}
+.row{display:grid;grid-template-columns:7.5rem 1fr 3.5rem;gap:12px;align-items:center}
+.row .name{font-family:var(--display);font-weight:600;font-size:1.1rem;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.row .name i{width:12px;height:12px;border-radius:50%;background:var(--hc);flex:none}
+.track{height:14px;background:var(--bg);border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.fill{height:100%;background:var(--hc);border-radius:999px;width:0;transition:width .5s ease}
+.total{font-family:var(--display);font-weight:800;font-size:1.3rem;text-align:right;font-variant-numeric:tabular-nums}
+.split{grid-column:2 / 4;font-size:.8rem;color:var(--muted);margin-top:-8px;font-variant-numeric:tabular-nums}
+.split b{color:var(--fg)}
+.lead{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;background:var(--hc);color:#fff;padding:2px 8px;border-radius:999px}
+.feed{list-style:none;margin:0;padding:0;display:grid;gap:8px;font-size:.9rem}
+.feed li{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:baseline;border-bottom:1px solid var(--line);padding-bottom:8px}
+.feed .h{font-weight:700;color:var(--hc)}
+.feed .w{min-width:0;overflow-wrap:anywhere}
+.feed .p{font-weight:700;font-variant-numeric:tabular-nums}
+.feed .t{grid-column:2 / 4;font-size:.75rem;color:var(--muted);margin-top:-6px}
+details.teacher{font-size:.85rem;color:var(--muted)}
+details.teacher summary{cursor:pointer}
+details.teacher .tools{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;align-items:center}
+details.teacher input{max-width:9rem}
+
+/* Chat */
+.chat{display:flex;flex-direction:column;gap:10px;height:440px;overflow-y:auto;padding-right:4px}
+.msg{max-width:85%;padding:10px 14px;border-radius:16px;white-space:pre-wrap;overflow-wrap:anywhere}
+.msg.bot{background:var(--bubble-bot);border-bottom-left-radius:4px;align-self:flex-start}
+.msg.me{background:var(--bubble-me);color:var(--bubble-me-fg);border-bottom-right-radius:4px;align-self:flex-end}
+.msg.thinking{color:var(--muted);font-style:italic}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--bg);color:var(--fg);font:inherit;font-size:.85rem;padding:5px 11px;border-radius:999px;cursor:pointer}
+.chip:hover{border-color:var(--leaf)}
+form.ask{display:flex;gap:8px}
+input[type=text],input[type=password],textarea,select{flex:1;min-width:0;font:inherit;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--fg)}
+textarea{resize:vertical;min-height:70px;width:100%}
+.field{display:grid;gap:4px}
+.field label{font-size:.85rem;font-weight:700}
+.btn{font:inherit;font-weight:700;border:0;border-radius:10px;padding:10px 16px;background:var(--leaf);color:var(--on-leaf);cursor:pointer}
+.btn:disabled{opacity:.5;cursor:default}
+.btn.house{background:var(--hc);color:#fff}
+.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-weight:400;font-size:.85rem;padding:6px 12px}
+:focus-visible{outline:3px solid var(--leaf);outline-offset:2px}
+
+/* Snap & Sort */
+.drop{border:2px dashed var(--line);border-radius:12px;padding:18px;text-align:center;cursor:pointer;display:grid;gap:8px;place-items:center;color:var(--muted)}
+.drop:hover,.drop.over{border-color:var(--leaf);color:var(--fg)}
+.drop img{max-height:180px;border-radius:8px}
+.result{border-radius:12px;padding:14px;display:grid;gap:8px;border:2px solid var(--bin,var(--line));justify-items:start}
+.binname{font-family:var(--display);font-weight:800;font-size:1.4rem;color:var(--bin)}
+.result p{margin:0}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:.8rem;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.note{font-size:.85rem;color:var(--muted);margin:0}
+.ok{color:var(--leaf);font-weight:700;margin:0}
+.offline{background:var(--leaf-soft);border-radius:10px;padding:10px 12px;font-size:.9rem;margin:0}
+
+/* Reports */
+.reports{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.reports li{border:1px solid var(--line);border-left:4px solid var(--urg);border-radius:10px;padding:10px 12px;display:grid;gap:4px}
+.reports li.fixed{opacity:.6;border-left-color:var(--line)}
+.reports .top{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:baseline}
+.reports .s{font-weight:700;overflow-wrap:anywhere;min-width:0}
+.reports .m{font-size:.8rem;color:var(--muted)}
+.pill{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--urg);border:1px solid var(--urg);padding:1px 7px;border-radius:999px;white-space:nowrap}
+.reports .act{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+/* Celebration */
+.celebrate{position:fixed;inset:0;z-index:50;display:grid;place-items:center;background:var(--scrim);
+  padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.celebrate canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.cel-card{position:relative;background:var(--surface);border-radius:20px;border:3px solid var(--hc);padding:28px 26px;max-width:420px;width:100%;text-align:center;display:grid;gap:10px;justify-items:center}
+.cel-house{font-family:var(--display);font-weight:800;font-size:2.2rem;line-height:1.05;margin:0;color:var(--hc);text-wrap:balance}
+.cel-level{font-family:var(--display);font-weight:600;font-size:1.3rem;margin:0}
+.dots{display:flex;gap:6px}
+.dots i{width:14px;height:14px;border-radius:50%;border:2px solid var(--hc)}
+.dots i.on{background:var(--hc)}
+@media (prefers-reduced-motion:no-preference){
+  .msg{animation:pop .18s ease-out}@keyframes pop{from{transform:translateY(4px);opacity:.6}}
+  .cel-card{animation:grow .45s cubic-bezier(.2,1.4,.4,1)}@keyframes grow{from{transform:scale(.7)}}
+}
+@media (prefers-reduced-motion:reduce){.fill{transition:none}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div>
+      <p class="school">The Indian High School <span class="engine" id="engine">Connecting…</span></p>
+      <h1>Pasum<span>AI</span></h1>
+      <p class="tag"><strong>பசுமை</strong> (pasumai) means greenness in Tamil. Your school's AI helper for saving electricity, cutting paper waste and keeping campus clean.</p>
+    </div>
+    <div class="controls">
+      <div class="seg" role="group" aria-label="Age group">
+        <button type="button" data-mode="junior" aria-pressed="false">Junior<small>Grades 1–4</small></button>
+        <button type="button" data-mode="middle" aria-pressed="true">Middle<small>Grades 5–8</small></button>
+        <button type="button" data-mode="senior" aria-pressed="false">Senior<small>Grades 9–12</small></button>
+      </div>
+      <div class="seg houses" role="group" aria-label="My house" id="house-pick"></div>
+    </div>
+  </header>
+
+  <p class="offline" id="offline" hidden></p>
+
+  <section class="panel" aria-labelledby="board-h">
+    <div class="panel-head">
+      <h2 id="board-h">House scoreboard</h2>
+      <span class="label" id="board-status">Loading scores…</span>
+    </div>
+    <div class="board">
+      <div class="rows" id="rows"></div>
+      <div style="display:grid;gap:10px;align-content:start;min-width:0">
+        <span class="label">Latest green actions</span>
+        <ul class="feed" id="feed"></ul>
+        <p class="note" id="feed-empty">No points yet. Sort a photo, log an eco action or report a problem to put your house on the board.</p>
+        <details class="teacher" id="teacher" hidden>
+          <summary>Teacher tools</summary>
+          <div class="tools">
+            <input type="password" id="pin" placeholder="Teacher PIN" aria-label="Teacher PIN" autocomplete="off">
+            <button class="btn ghost" id="reset" type="button">Reset scoreboard</button>
+            <button class="btn ghost" id="preview" type="button">Preview a celebration</button>
+          </div>
+          <p class="note" id="teacher-msg"></p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <div class="grid">
+    <section class="panel" aria-labelledby="chat-h">
+      <div class="panel-head"><h2 id="chat-h">Chat with PasumAI</h2><span class="label" id="mode-label">Middle mode · earn points</span></div>
+      <div class="chat" id="chat" aria-live="polite"></div>
+      <div class="chips" id="chips"></div>
+      <form class="ask" id="ask">
+        <input type="text" id="q" placeholder="Ask anything about going green at school" autocomplete="off" aria-label="Your message">
+        <button class="btn" id="send" type="submit">Send</button>
+      </form>
+    </section>
+
+    <section class="panel" aria-labelledby="snap-h">
+      <div class="panel-head"><h2 id="snap-h">Snap &amp; Sort</h2><span class="label">AI image check</span></div>
+      <p class="note">Take a photo of any rubbish. PasumAI works out which bin it goes in and how it could be reused.</p>
+      <label class="drop" id="drop" for="photo">
+        <img id="preview-img" alt="Your photo" hidden>
+        <span id="drop-text"><strong>Choose a photo</strong> or drop it here</span>
+      </label>
+      <input type="file" id="photo" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
+      <button class="btn" id="sort" type="button" disabled>Sort it</button>
+      <div id="result" aria-live="polite"></div>
+      <div class="legend">
+        <span><i style="background:var(--bin-recycle)"></i>Recycle</span>
+        <span><i style="background:var(--bin-reuse)"></i>Reuse</span>
+        <span><i style="background:var(--bin-compost)"></i>Compost</span>
+        <span><i style="background:var(--bin-general)"></i>General waste</span>
+        <span><i style="background:var(--bin-hazard)"></i>Special disposal</span>
+      </div>
+    </section>
+  </div>
+
+  <div class="grid even">
+    <section class="panel" aria-labelledby="log-h">
+      <div class="panel-head"><h2 id="log-h">Log an eco action</h2><span class="label">AI scores it</span></div>
+      <div class="field">
+        <label for="act">What did you do to help the school go green?</label>
+        <textarea id="act" placeholder="e.g. I switched off the lights and fans in the empty computer lab after lunch"></textarea>
+      </div>
+      <button class="btn" id="rate" type="button">Score my action</button>
+      <div id="act-result" aria-live="polite"></div>
+      <p class="note">In this demo, points go on the board straight away. In school, a teacher would approve them first.</p>
+    </section>
+
+    <section class="panel" aria-labelledby="rep-h">
+      <div class="panel-head"><h2 id="rep-h">Report a problem</h2><span class="label">Earn points · fix for more</span></div>
+      <div class="field">
+        <label for="rtype">What's the problem?</label>
+        <select id="rtype"></select>
+      </div>
+      <div class="field">
+        <label for="rloc">Where?</label>
+        <input type="text" id="rloc" placeholder="e.g. Grade 7B classroom, canteen, library" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="rdet">Details (optional)</label>
+        <input type="text" id="rdet" placeholder="e.g. 4 fans and the AC on, nobody inside" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="rphoto">Photo (optional)</label>
+        <input type="file" id="rphoto" accept="image/jpeg,image/png,image/webp,image/gif">
+      </div>
+      <button class="btn" id="rcheck" type="button">Check my report</button>
+      <div id="rep-result" aria-live="polite"></div>
+      <span class="label">Open problems</span>
+      <ul class="reports" id="reports"></ul>
+      <p class="note" id="reports-empty">No open problems. Spotted something? Report it above.</p>
+    </section>
+  </div>
+</div>
+
+<div class="celebrate" id="celebrate" hidden role="dialog" aria-modal="true" aria-labelledby="cel-house">
+  <canvas id="confetti"></canvas>
+  <div class="cel-card" id="cel-card">
+    <span class="label">Level up!</span>
+    <p class="cel-house" id="cel-house"></p>
+    <p class="cel-level" id="cel-level"></p>
+    <div class="dots" id="cel-dots"></div>
+    <p class="note" id="cel-next"></p>
+    <button class="btn house" id="cel-close" type="button">Keep going</button>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   PASUMAI · The Indian High School
+   PART 1 — THINGS YOU CAN EDIT EASILY
+   ========================================================= */
+const HOUSES = [
+  {id:"ruby",     name:"Ruby",     color:"var(--h-ruby)"},
+  {id:"emerald",  name:"Emerald",  color:"var(--h-emerald)"},
+  {id:"topaz",    name:"Topaz",    color:"var(--h-topaz)"},
+  {id:"sapphire", name:"Sapphire", color:"var(--h-sapphire)"}
+];
+
+/* House levels: a celebration pops up each time a house reaches a new one. */
+const LEVELS = [
+  {min:0,   name:"Seed"},
+  {min:25,  name:"Sprout"},
+  {min:50,  name:"Sapling"},
+  {min:100, name:"Young Tree"},
+  {min:200, name:"Mighty Tree"},
+  {min:400, name:"Forest"}
+];
+
+/* Problems students can report. category = which scoreboard column it counts towards. */
+const ISSUES = [
+  {id:"lights",  label:"Lights, fans or AC left on",        category:"energy"},
+  {id:"devices", label:"Computer, projector or screen left on", category:"energy"},
+  {id:"paper",   label:"Paper being wasted",                category:"paper"},
+  {id:"litter",  label:"Litter or overflowing bin",         category:"clean"},
+  {id:"water",   label:"Leaking tap or water left running",  category:"clean"},
+  {id:"other",   label:"Something else",                    category:"clean"}
+];
+const FIX_POINTS = 3;
+
+const SCHOOL = "The student's school is The Indian High School. Its four houses are Ruby, Emerald, Topaz and Sapphire, and students earn house points for eco actions.";
+const MODES = {
+  junior: {
+    label: "Junior mode · learn",
+    hello: "Hi! I'm PasumAI 🌱 My name means \"greenness\" in Tamil. Want to hear a fun fact about recycling?",
+    chips: ["Why should I switch off the lights?", "Tell me a fun fact about paper", "Give me a quiz!"],
+    rules: "You are PasumAI (from the Tamil word pasumai, meaning greenness), a friendly eco helper for children aged 6-9. " + SCHOOL + " Use very short, simple sentences and a cheerful tone. Teach ONE idea at a time about saving electricity, saving paper or keeping the school clean. Use small stories or comparisons kids understand. You may offer a 2-question quiz. Never ask for personal information. Keep replies under 60 words."
+  },
+  middle: {
+    label: "Middle mode · earn points",
+    hello: "Hey! I'm PasumAI. Ask me for an eco challenge and earn points for your house. Which house are you in?",
+    chips: ["Give me a challenge for today", "How can our class use less paper?", "Is this worth points: I turned off the AC in an empty room"],
+    rules: "You are PasumAI (from the Tamil word pasumai, meaning greenness), an eco coach for students aged 10-13. " + SCHOOL + " Suggest small, doable challenges about saving electricity, reducing paper and keeping campus clean. When a student describes an eco action, suggest 1 to 10 points and say why, and tell them to use the 'Log an eco action' box to add it to the scoreboard. If they mention a problem like lights left on, tell them to use 'Report a problem'. Be encouraging and a little playful. Never ask for personal information. Keep replies under 90 words."
+  },
+  senior: {
+    label: "Senior mode · lead",
+    hello: "Hi, I'm PasumAI. I can help you plan a campaign for your house, write a notice for juniors, or work out the impact of an idea. What would you like to work on?",
+    chips: ["Plan a 2-week paper-saving campaign for my house", "Write a poster message for Grade 2", "Estimate the energy saved by switching off 30 fans for 1 hour"],
+    rules: "You are PasumAI (from the Tamil word pasumai, meaning greenness), an assistant for senior students aged 14-17 who lead their school's sustainability efforts. " + SCHOOL + " Help them plan campaigns, write messages for younger students, and estimate impact with clear, simple calculations (show the numbers and state assumptions). Be practical and concise, using short bullet points when helpful. Keep replies under 150 words."
+  }
+};
+const AGE_NOTE = {junior:"Write for a 7-year-old.", middle:"Write for an 11-year-old.", senior:"Write for a 15-year-old."};
+const CATS = {energy:"Energy", paper:"Paper", clean:"Clean campus"};
+
+/* =========================================================
+   PART 2 — THE "ENGINE": talks to the AI and the scoreboard.
+   Inside Claude it uses Claude. On the website it uses our
+   own server (/api), which talks to Google Gemini.
+   ========================================================= */
+const B = {kind:"none", sample:null, db:null, owner:false, aiMode:"", storeMode:"", refresh:()=>{}};
+
+async function initEngine(){
+  if (window.claude){
+    const c = window.claude;
+    const [s, d, u] = await Promise.all([
+      c.use("sample").catch(() => null), c.use("db").catch(() => null), c.use("user").catch(() => null)
+    ]);
+    B.kind = "claude"; B.sample = s || null; B.db = d || null;
+    try { B.owner = !!(u && u.isOwner()); } catch {}
+    B.aiMode = B.sample ? "Claude" : ""; B.storeMode = B.db ? "live" : "";
+    return;
+  }
+  try{
+    const r = await fetch("api/health");
+    if (!r.ok) throw 0;
+    const j = await r.json();
+    B.kind = "web"; B.aiMode = j.ai === "gemini" ? "Gemini" : "Demo"; B.storeMode = j.store;
+  }catch{ B.kind = "none"; }
+}
+const hasAI = () => (B.kind === "claude" && !!B.sample) || B.kind === "web";
+const hasStore = () => (B.kind === "claude" && !!B.db) || B.kind === "web";
+
+async function api(path, body){
+  const r = await fetch(path, {method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify(body)});
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw {code: j.code || (r.status === 429 ? "rate_limited" : "upstream_error"), message: j.error || "Request failed"};
+  return j;
+}
+/* Makes photos smaller before sending them to our server. */
+async function shrink(file, max = 1024){
+  const bmp = await createImageBitmap(file);
+  const s = Math.min(1, max / Math.max(bmp.width, bmp.height));
+  const c = document.createElement("canvas");
+  c.width = Math.round(bmp.width * s); c.height = Math.round(bmp.height * s);
+  c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+  return {mime:"image/jpeg", data:c.toDataURL("image/jpeg", 0.85).split(",")[1]};
+}
+async function aiChat(system, turns, onText){
+  if (B.kind === "claude"){
+    const res = await B.sample([{role:"user", content:system}, ...turns], {modelTier:"quick", cache:false, onText:({text}) => onText(text)});
+    return res.text;
+  }
+  const j = await api("api/ai", {task:"chat", system, turns});
+  onText(j.text); return j.text;
+}
+async function aiJSON(task, prompt, image){
+  if (B.kind === "claude"){
+    const opts = {modelTier: image ? "default" : "quick"};
+    if (image) opts.images = image;
+    return B.sample.json(prompt, opts);
+  }
+  const body = {task, prompt};
+  if (image) body.image = await shrink(image);
+  return (await api("api/ai", body)).data;
+}
+
+/* Scoreboard storage */
+function listen(cb){
+  const st = {actions:[], reports:[], loaded:false};
+  if (B.kind === "claude" && B.db){
+    const timer = setTimeout(() => setBoardStatus("Can't reach the scoreboard yet"), 10000);
+    B.db.collection("actions").orderBy("at","desc").limit(1000).onSnapshot(s => {
+      clearTimeout(timer); st.actions = s.docs.map(d => d.data()); st.loaded = true; setBoardStatus("Live"); cb(st);
+    }, () => { clearTimeout(timer); setBoardStatus("Scoreboard unavailable"); });
+    B.db.collection("reports").orderBy("at","desc").limit(100).onSnapshot(s => {
+      st.reports = s.docs.map(d => ({...d.data(), id:d.id})); cb(st);
+    }, () => {});
+  } else if (B.kind === "web"){
+    const pull = async () => {
+      try{
+        const r = await fetch("api/data"); if (!r.ok) throw 0;
+        const j = await r.json();
+        st.actions = j.actions || []; st.reports = j.reports || []; st.loaded = true;
+        setBoardStatus(B.storeMode === "memory" ? "Test mode · scores reset on restart" : "Live");
+        cb(st);
+      }catch{ setBoardStatus("Can't reach the scoreboard"); }
+    };
+    B.refresh = pull; pull();
+    setInterval(() => { if (!document.hidden) pull(); }, 8000);
+  }
+}
+async function saveAction(a){
+  if (B.kind === "claude") return B.db.collection("actions").add({...a, at:Date.now()});
+  await api("api/data", {op:"action", action:a}); B.refresh();
+}
+async function saveReport(r){
+  if (B.kind === "claude"){
+    await B.db.collection("reports").add({...r, status:"open", at:Date.now()});
+    return B.db.collection("actions").add({house:r.house, points:r.points, category:r.category, source:"report", what:"Reported: " + r.summary, at:Date.now()});
+  }
+  await api("api/data", {op:"report", report:r}); B.refresh();
+}
+async function fixReport(rep, house){
+  if (B.kind === "claude"){
+    await B.db.collection("reports").doc(rep.id).update({status:"fixed", fixedBy:house, fixedAt:Date.now()});
+    return B.db.collection("actions").add({house, points:FIX_POINTS, category:rep.category, source:"fix", what:"Fixed: " + rep.summary, at:Date.now()});
+  }
+  await api("api/data", {op:"fix", id:rep.id, house}); B.refresh();
+}
+async function resetAll(pin){
+  if (B.kind === "claude"){
+    for (const col of ["actions","reports"]){
+      const snap = await B.db.collection(col).get();
+      for (const d of snap.docs) await B.db.collection(col).doc(d.id).delete();
+    }
+    return;
+  }
+  await api("api/data", {op:"reset", pin}); B.refresh();
+}
+
+/* =========================================================
+   PART 3 — THE PAGE
+   ========================================================= */
+let mode = "middle", turns = [], busy = false, photoFile = null;
+let actions = [], reports = [];
+let myHouse = null;
+try { myHouse = localStorage.getItem("pasumai-house"); } catch {}
+
+const $ = id => document.getElementById(id);
+const houseOf = id => HOUSES.find(h => h.id === id);
+const levelOf = pts => { let i = 0; LEVELS.forEach((l, k) => { if (pts >= l.min) i = k; }); return i; };
+const cssVar = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const setBoardStatus = t => { $("board-status").textContent = t; };
+const el = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt !== undefined) e.textContent = txt; return e; };
+const chat = $("chat");
+
+function errorText(e){
+  const c = e && e.code;
+  if (c === "not_granted" || c === "sampling_disabled") return "PasumAI needs permission to use Claude. Reload the page and choose Allow.";
+  if (c === "rate_limited") return "Lots of questions at once! Wait a minute and try again.";
+  if (c === "image_rejected") return "That photo didn't work. Try a JPG or PNG.";
+  return "Something went wrong. Try again.";
+}
+
+/* ---------- House picker ---------- */
+function renderHousePicker(){
+  const wrap = $("house-pick"); wrap.innerHTML = "";
+  HOUSES.forEach(h => {
+    const b = el("button"); b.type = "button"; b.style.setProperty("--hc", h.color);
+    b.setAttribute("aria-pressed", h.id === myHouse);
+    b.append(el("i"), document.createTextNode(h.name));
+    b.onclick = () => { myHouse = h.id; try { localStorage.setItem("pasumai-house", h.id); } catch {} renderHousePicker(); };
+    wrap.appendChild(b);
+  });
+}
+
+/* ---------- Scoreboard ---------- */
+const validAction = a => a && houseOf(a.house) && typeof a.points === "number" && a.points >= 0 && a.points <= 10;
+function totalsOf(list){
+  const t = {}; HOUSES.forEach(h => t[h.id] = {all:0, energy:0, paper:0, clean:0});
+  list.forEach(a => { const x = t[a.house]; x.all += a.points; if (x[a.category] !== undefined) x[a.category] += a.points; });
+  return t;
+}
+function renderBoard(){
+  const totals = totalsOf(actions);
+  const max = Math.max(1, ...HOUSES.map(h => totals[h.id].all));
+  const top = Math.max(...HOUSES.map(h => totals[h.id].all));
+  const rows = $("rows"); rows.innerHTML = "";
+  [...HOUSES].sort((a,b) => totals[b.id].all - totals[a.id].all).forEach(h => {
+    const t = totals[h.id], lv = levelOf(t.all), next = LEVELS[lv + 1];
+    const row = el("div","row"); row.style.setProperty("--hc", h.color);
+    const name = el("div","name"); name.append(el("i"), document.createTextNode(h.name));
+    if (top > 0 && t.all === top) name.appendChild(el("span","lead","Leading"));
+    const track = el("div","track"), fill = el("div","fill"); track.appendChild(fill);
+    const split = el("div","split");
+    split.appendChild(el("b", "", LEVELS[lv].name));
+    split.appendChild(document.createTextNode((next ? ` · ${next.min - t.all} to ${next.name}` : " · top level!") + ` · Energy ${t.energy} · Paper ${t.paper} · Clean ${t.clean}`));
+    row.append(name, track, el("div","total", t.all), split);
+    rows.appendChild(row);
+    requestAnimationFrame(() => fill.style.width = (t.all / max * 100) + "%");
+  });
+  const feed = $("feed"); feed.innerHTML = "";
+  actions.slice(0, 6).forEach(a => {
+    const h = houseOf(a.house);
+    const li = el("li"); li.style.setProperty("--hc", h.color);
+    li.append(el("span","h",h.name), el("span","w",String(a.what || "").slice(0,120)), el("span","p","+" + a.points),
+      el("span","t",(CATS[a.category] || "") + " · " + ago(a.at)));
+    feed.appendChild(li);
+  });
+  $("feed-empty").hidden = actions.length > 0;
+}
+function ago(t){
+  const s = (Date.now() - Number(t)) / 1000;
+  if (!isFinite(s)) return "";
+  if (s < 60) return "just now";
+  if (s < 3600) return Math.floor(s/60) + " min ago";
+  if (s < 86400) return Math.floor(s/3600) + " h ago";
+  return Math.floor(s/86400) + " d ago";
+}
+
+/* ---------- Celebrations ---------- */
+let knownLevels = null;
+const celQueue = [];
+function checkLevels(){
+  const totals = totalsOf(actions);
+  const now = {}; HOUSES.forEach(h => now[h.id] = levelOf(totals[h.id].all));
+  if (knownLevels) HOUSES.forEach(h => { if (now[h.id] > knownLevels[h.id]) celebrate(h, now[h.id], totals[h.id].all); });
+  knownLevels = now;
+}
+function celebrate(h, lv, pts){
+  celQueue.push({h, lv, pts});
+  if (celQueue.length === 1) showCelebration();
+}
+let confettiStop = null, celTimer = null;
+function showCelebration(){
+  const c = celQueue[0]; if (!c) return;
+  const box = $("celebrate"), card = $("cel-card");
+  card.style.setProperty("--hc", c.h.color);
+  $("cel-house").textContent = `${c.h.name} is now a ${LEVELS[c.lv].name}!`;
+  $("cel-level").textContent = `Level ${c.lv + 1} of ${LEVELS.length} · ${c.pts} points`;
+  const next = LEVELS[c.lv + 1];
+  $("cel-next").textContent = next ? `Next: ${next.name} at ${next.min} points.` : "That's the highest level. Amazing work!";
+  const dots = $("cel-dots"); dots.innerHTML = "";
+  LEVELS.forEach((_, i) => dots.appendChild(el("i", i <= c.lv ? "on" : "")));
+  box.hidden = false;
+  $("cel-close").focus();
+  confettiStop = confetti(cssVar("--h-" + c.h.id));
+  celTimer = setTimeout(closeCelebration, 7000);
+}
+function closeCelebration(){
+  clearTimeout(celTimer);
+  if (confettiStop) confettiStop();
+  $("celebrate").hidden = true;
+  celQueue.shift();
+  if (celQueue.length) setTimeout(showCelebration, 300);
+}
+$("cel-close").onclick = closeCelebration;
+$("celebrate").addEventListener("click", e => { if (e.target.id === "celebrate") closeCelebration(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("celebrate").hidden) closeCelebration(); });
+
+function confetti(main){
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return null;
+  const cv = $("confetti"), ctx = cv.getContext("2d");
+  const dpr = devicePixelRatio || 1;
+  cv.width = innerWidth * dpr; cv.height = innerHeight * dpr; ctx.scale(dpr, dpr);
+  const colors = [main, main, cssVar("--leaf"), cssVar("--h-topaz"), "#ffffff"];
+  const P = Array.from({length:160}, () => ({
+    x: innerWidth / 2 + (Math.random() - .5) * 120, y: innerHeight * .45,
+    vx: (Math.random() - .5) * 14, vy: -Math.random() * 14 - 4,
+    r: Math.random() * 6 + 4, a: Math.random() * 6, va: (Math.random() - .5) * .3,
+    c: colors[Math.floor(Math.random() * colors.length)], leaf: Math.random() < .35
+  }));
+  let raf, alive = true;
+  const draw = () => {
+    ctx.clearRect(0, 0, innerWidth, innerHeight);
+    P.forEach(p => {
+      p.vy += .32; p.vx *= .99; p.x += p.vx; p.y += p.vy; p.a += p.va;
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.a); ctx.fillStyle = p.c;
+      if (p.leaf){ ctx.beginPath(); ctx.ellipse(0, 0, p.r, p.r / 2.2, 0, 0, Math.PI * 2); ctx.fill(); }
+      else ctx.fillRect(-p.r / 2, -p.r / 4, p.r, p.r / 2);
+      ctx.restore();
+    });
+    if (alive && P.some(p => p.y < innerHeight + 20)) raf = requestAnimationFrame(draw);
+  };
+  draw();
+  return () => { alive = false; cancelAnimationFrame(raf); ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0, 0, cv.width, cv.height); };
+}
+
+/* ---------- Giving points ---------- */
+function claimButton(label, onClaim, parent){
+  const status = el("p","note");
+  const btn = el("button","btn house"); btn.type = "button";
+  const h = houseOf(myHouse);
+  btn.style.setProperty("--hc", h ? h.color : "var(--leaf)");
+  btn.textContent = h ? label.replace("{house}", h.name) : label.replace("{house}", "my house");
+  btn.onclick = async () => {
+    if (!myHouse){ status.textContent = "Pick your house at the top first."; return; }
+    if (!hasStore()){ status.textContent = "The scoreboard isn't connected right now."; return; }
+    btn.disabled = true;
+    try{
+      await onClaim(myHouse);
+      btn.hidden = true; status.className = "ok"; status.textContent = `Done! Points added to ${houseOf(myHouse).name}.`;
+    }catch{ btn.disabled = false; status.textContent = "Couldn't save. Try again."; }
+  };
+  parent.append(btn, status);
+}
+
+/* ---------- Chat ---------- */
+function addMsg(text, who, extra){
+  const d = el("div", "msg " + who + (extra ? " " + extra : ""), text);
+  chat.appendChild(d); chat.scrollTop = chat.scrollHeight; return d;
+}
+function setMode(m){
+  mode = m;
+  document.querySelectorAll("[data-mode]").forEach(b => b.setAttribute("aria-pressed", b.dataset.mode === m));
+  $("mode-label").textContent = MODES[m].label;
+  turns = []; chat.innerHTML = "";
+  addMsg(MODES[m].hello, "bot");
+  const chips = $("chips"); chips.innerHTML = "";
+  MODES[m].chips.forEach(c => { const b = el("button","chip",c); b.type = "button"; b.onclick = () => send(c); chips.appendChild(b); });
+}
+document.querySelectorAll("[data-mode]").forEach(b => b.onclick = () => setMode(b.dataset.mode));
+
+async function send(text){
+  text = (text || "").trim();
+  if (!text || busy) return;
+  addMsg(text, "me"); $("q").value = "";
+  if (!hasAI()){ addMsg("I can't reach my AI brain right now.", "bot"); return; }
+  busy = true; $("send").disabled = true;
+  turns.push({role:"user", content:text});
+  const bubble = addMsg("Thinking...", "bot", "thinking");
+  const houseNote = myHouse ? ` This student is in ${houseOf(myHouse).name} house.` : "";
+  try{
+    const reply = await aiChat(MODES[mode].rules + houseNote, turns.slice(-12), t => {
+      bubble.classList.remove("thinking"); bubble.textContent = t; chat.scrollTop = chat.scrollHeight;
+    });
+    turns.push({role:"assistant", content:reply});
+  }catch(e){
+    turns.pop(); bubble.classList.remove("thinking"); bubble.textContent = e.text || errorText(e);
+  }finally{ busy = false; $("send").disabled = false; }
+}
+$("ask").addEventListener("submit", e => { e.preventDefault(); send($("q").value); });
+
+/* ---------- Snap & Sort ---------- */
+const BINS = {
+  recycle:{name:"Recycle", color:"var(--bin-recycle)"},
+  reuse:{name:"Reuse it", color:"var(--bin-reuse)"},
+  compost:{name:"Compost", color:"var(--bin-compost)"},
+  general:{name:"General waste", color:"var(--bin-general)"},
+  special:{name:"Special disposal", color:"var(--bin-hazard)"}
+};
+function pickPhoto(file){
+  if (!file || !file.type.startsWith("image/")) return;
+  photoFile = file;
+  const img = $("preview-img"); img.src = URL.createObjectURL(file); img.hidden = false;
+  $("drop-text").innerHTML = "<strong>Change photo</strong>";
+  $("sort").disabled = !hasAI();
+  $("result").innerHTML = "";
+}
+$("photo").addEventListener("change", e => pickPhoto(e.target.files[0]));
+const drop = $("drop");
+drop.addEventListener("dragover", e => { e.preventDefault(); drop.classList.add("over"); });
+drop.addEventListener("dragleave", () => drop.classList.remove("over"));
+drop.addEventListener("drop", e => { e.preventDefault(); drop.classList.remove("over"); pickPhoto(e.dataTransfer.files[0]); });
+
+$("sort").onclick = async () => {
+  if (!photoFile || !hasAI()) return;
+  const out = $("result");
+  $("sort").disabled = true;
+  out.innerHTML = '<p class="note">Looking at your photo...</p>';
+  const prompt = `The photo shows an item a student found at school. Identify the main item and decide how to dispose of it.
+Choose exactly one bin: "recycle" (clean paper, card, plastic bottles, cans, glass), "reuse" (still useful as it is or for crafts), "compost" (food and plant waste), "general" (dirty or mixed materials that cannot be recycled), "special" (batteries, electronics, bulbs, chemicals: must go to a special collection point).
+${AGE_NOTE[mode]}
+Reply with only JSON: {"item": string, "bin": "recycle"|"reuse"|"compost"|"general"|"special", "why": string (1 sentence), "tip": string (1 reuse or disposal tip), "points": integer 1-5 for disposing of it correctly}.
+If the photo does not show waste or an object, use {"item":"unknown","bin":"general","why":"I couldn't see an item clearly.","tip":"Try another photo with the item in the middle.","points":0}.`;
+  try{
+    const r = await aiJSON("sort", prompt, photoFile);
+    const bin = BINS[r.bin] || BINS.general;
+    const points = Math.max(0, Math.min(5, Math.round(Number(r.points) || 0)));
+    out.innerHTML = "";
+    const card = el("div","result"); card.style.setProperty("--bin", bin.color);
+    card.append(el("span","label",String(r.item || "Item")), el("span","binname",bin.name), el("p","",String(r.why || "")), el("p","","Tip: " + String(r.tip || "")));
+    if (points > 0) claimButton(`Add +${points} to {house}`, house =>
+      saveAction({house, points, category:"clean", source:"snap", what:`Sorted ${String(r.item || "an item")} → ${bin.name}`}), card);
+    out.appendChild(card);
+  }catch(e){ out.innerHTML = ""; out.appendChild(el("p","note",errorText(e))); }
+  finally{ $("sort").disabled = false; }
+};
+
+/* ---------- Log an eco action ---------- */
+$("rate").onclick = async () => {
+  const text = $("act").value.trim(), out = $("act-result");
+  out.innerHTML = "";
+  if (!text){ out.appendChild(el("p","note","Write what you did first.")); return; }
+  if (!hasAI()){ out.appendChild(el("p","note","Scoring needs the AI, which isn't connected right now.")); return; }
+  $("rate").disabled = true;
+  out.appendChild(el("p","note","PasumAI is checking your action…"));
+  const prompt = `A student at a school says they did this eco action:
+"""${text.slice(0, 600)}"""
+Score it for a house points system. ${AGE_NOTE[mode]}
+Rules: small everyday actions get 1-3 points, actions that take real effort get 4-7, actions that involve organising or teaching others get 8-10. Give 0 points and "valid": false if it is not a real eco action, is unsafe, is a joke, or is impossible to believe.
+Reply with only JSON: {"valid": boolean, "points": integer 0-10, "category": "energy"|"paper"|"clean", "title": string (the action in under 10 words), "reason": string (1 friendly sentence explaining the score)}.`;
+  try{
+    const r = await aiJSON("rate", prompt);
+    const points = Math.max(0, Math.min(10, Math.round(Number(r.points) || 0)));
+    const category = CATS[r.category] ? r.category : "clean";
+    out.innerHTML = "";
+    const card = el("div","result"); card.style.setProperty("--bin","var(--leaf)");
+    card.append(el("span","label",CATS[category]), el("span","binname", r.valid && points > 0 ? `${points} points` : "No points this time"), el("p","",String(r.reason || "")));
+    if (r.valid && points > 0){
+      const title = String(r.title || text).slice(0, 120);
+      claimButton(`Add +${points} to {house}`, house => saveAction({house, points, category, source:"action", what:title}), card);
+      $("act").value = "";
+    }
+    out.appendChild(card);
+  }catch(e){ out.innerHTML = ""; out.appendChild(el("p","note",errorText(e))); }
+  finally{ $("rate").disabled = false; }
+};
+
+/* ---------- Report a problem ---------- */
+ISSUES.forEach(i => { const o = el("option","",i.label); o.value = i.id; $("rtype").appendChild(o); });
+const URG = {high:{label:"Urgent", color:"var(--bin-hazard)"}, medium:{label:"Soon", color:"var(--h-topaz)"}, low:{label:"Low", color:"var(--muted)"}};
+
+$("rcheck").onclick = async () => {
+  const out = $("rep-result"); out.innerHTML = "";
+  const issue = ISSUES.find(i => i.id === $("rtype").value) || ISSUES[0];
+  const loc = $("rloc").value.trim(), det = $("rdet").value.trim(), photo = $("rphoto").files[0];
+  if (!loc){ out.appendChild(el("p","note","Say where the problem is.")); return; }
+  if (!hasAI()){ out.appendChild(el("p","note","Checking reports needs the AI, which isn't connected right now.")); return; }
+  $("rcheck").disabled = true;
+  out.appendChild(el("p","note","PasumAI is checking your report…"));
+  const prompt = `A student is reporting a problem at school.
+Problem type: ${issue.label}
+Where: ${loc.slice(0, 80)}
+Details: ${det.slice(0, 300) || "(none)"}
+${photo ? "A photo of the problem is attached." : "No photo."}
+Decide if this is a genuine, useful report about wasted electricity, wasted paper, wasted water or campus cleanliness. ${AGE_NOTE[mode]}
+Reply with only JSON: {"valid": boolean, "summary": string (the problem in under 12 words), "urgency": "low"|"medium"|"high", "points": integer 1-5 (more for urgent or clearly described problems), "advice": string (1 sentence: what to do now; never tell a student to touch electrical equipment that looks damaged, wet or unsafe; tell them to get an adult instead)}.
+Set "valid" false and "points" 0 for jokes, rude or made-up reports.`;
+  try{
+    const r = await aiJSON("report", prompt, photo || null);
+    const points = Math.max(0, Math.min(5, Math.round(Number(r.points) || 0)));
+    const urgency = URG[r.urgency] ? r.urgency : "low";
+    out.innerHTML = "";
+    const card = el("div","result"); card.style.setProperty("--bin", URG[urgency].color);
+    card.append(el("span","label", URG[urgency].label + " · " + CATS[issue.category]),
+      el("span","binname", r.valid && points > 0 ? `${points} points` : "Not sent"),
+      el("p","", String(r.summary || "")), el("p","", String(r.advice || "")));
+    if (r.valid && points > 0){
+      const summary = String(r.summary || issue.label).slice(0, 100);
+      claimButton(`Send report · +${points} to {house}`, async house => {
+        await saveReport({house, points, category:issue.category, type:issue.id, location:loc.slice(0, 60), summary, urgency});
+        $("rloc").value = ""; $("rdet").value = ""; $("rphoto").value = "";
+      }, card);
+    }
+    out.appendChild(card);
+  }catch(e){ out.innerHTML = ""; out.appendChild(el("p","note",errorText(e))); }
+  finally{ $("rcheck").disabled = false; }
+};
+
+function renderReports(){
+  const list = $("reports"); list.innerHTML = "";
+  const open = reports.filter(r => r.status !== "fixed").slice(0, 6);
+  const fixed = reports.filter(r => r.status === "fixed").slice(0, 3);
+  [...open, ...fixed].forEach(r => {
+    const u = URG[r.urgency] || URG.low, h = houseOf(r.house);
+    const li = el("li", r.status === "fixed" ? "fixed" : ""); li.style.setProperty("--urg", u.color);
+    const top = el("div","top"); top.append(el("span","s",String(r.summary || "")), el("span","pill", r.status === "fixed" ? "Fixed" : u.label));
+    const meta = `${String(r.location || "")} · reported by ${h ? h.name : "?"} · ${ago(r.at)}` + (r.status === "fixed" && houseOf(r.fixedBy) ? ` · fixed by ${houseOf(r.fixedBy).name}` : "");
+    li.append(top, el("span","m",meta));
+    if (r.status !== "fixed"){
+      const act = el("div","act");
+      claimButton(`Mark fixed · +${FIX_POINTS} to {house}`, house => fixReport(r, house), act);
+      act.firstChild.classList.add("ghost"); act.firstChild.classList.remove("house");
+      li.appendChild(act);
+    }
+    list.appendChild(li);
+  });
+  $("reports-empty").hidden = open.length > 0;
+}
+
+/* ---------- Teacher tools ---------- */
+let resetArmed = false;
+$("reset").onclick = async () => {
+  const b = $("reset"), msg = $("teacher-msg");
+  if (!resetArmed){ resetArmed = true; b.textContent = "Tap again to delete all points"; setTimeout(() => { resetArmed = false; b.textContent = "Reset scoreboard"; }, 4000); return; }
+  b.disabled = true; b.textContent = "Clearing…";
+  try{ await resetAll($("pin").value); msg.textContent = "Scoreboard cleared."; knownLevels = null; }
+  catch(e){ msg.textContent = e.message === "Wrong PIN" ? "That PIN isn't right." : (e.message || "Couldn't reset."); }
+  resetArmed = false; b.disabled = false; b.textContent = "Reset scoreboard";
+};
+$("preview").onclick = () => {
+  const h = houseOf(myHouse) || HOUSES[1];
+  celebrate(h, 2, LEVELS[2].min);
+};
+
+/* ---------- Start ---------- */
+renderHousePicker(); setMode("middle"); renderBoard(); renderReports();
+(async () => {
+  await initEngine();
+  const eng = $("engine"), off = $("offline");
+  if (B.kind === "none"){
+    eng.textContent = "Offline";
+    off.textContent = "PasumAI can't reach its server right now. Check the internet connection and reload.";
+    off.hidden = false; setBoardStatus("Offline"); return;
+  }
+  eng.textContent = B.kind === "claude" ? "AI: Claude" : (B.aiMode === "Gemini" ? "AI: Gemini" : "Demo mode");
+  if (B.kind === "web" && B.aiMode === "Demo"){
+    off.textContent = "Demo mode: no AI key is set yet, so PasumAI gives practice answers. Add a Gemini key to switch on the real AI.";
+    off.hidden = false;
+  }
+  if (B.kind === "claude" && !B.sample){ off.textContent = "The AI isn't available in this view."; off.hidden = false; }
+  if (photoFile) $("sort").disabled = !hasAI();
+  if (B.kind === "web" || B.owner){ $("teacher").hidden = false; }
+  if (B.kind === "claude") $("pin").hidden = true;
+  if (!hasStore()){ setBoardStatus("Scoreboard unavailable"); return; }
+  listen(st => {
+    actions = st.actions.filter(validAction);
+    reports = st.reports;
+    renderBoard(); renderReports();
+    if (st.loaded) checkLevels();
+  });
+})();
+</script>
+
+</body>
+</html>
