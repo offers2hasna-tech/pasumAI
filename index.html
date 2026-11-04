@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <style>[hidden]{display:none!important} img{max-width:100%} body{margin:0}</style>
 <title>PasumAI</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath fill='%232f7d4a' d='M24 4C13 10 7 19 7 28c0 9 7.6 16 17 16s17-7 17-16C41 19 35 10 24 4Z'/%3E%3Cpath d='M24 42V16M24 30l-7-6M24 24l7-6' fill='none' stroke='%23fff' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
 <style>
@@ -40,7 +41,12 @@ header{display:flex;flex-wrap:wrap;gap:16px;align-items:end;justify-content:spac
 .school{margin:0 0 4px;font-size:.8rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:700;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .engine{font-size:.7rem;letter-spacing:.06em;border:1px solid var(--line);border-radius:999px;padding:1px 8px;background:var(--surface)}
 h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,5vw,2.8rem);line-height:1;margin:0;letter-spacing:-.02em}
-h1 span{color:var(--leaf)}
+h1 .wm span{color:var(--leaf)}
+h1.brand{display:flex;align-items:center;gap:10px}
+.logo{width:1.05em;height:1.05em;flex:none}
+.logo .lf{fill:var(--leaf)}
+.logo .vn{fill:none;stroke:var(--surface);stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.logo .nd{fill:var(--surface)}
 .tag{margin:6px 0 0;color:var(--muted);max-width:52ch}
 h2{font-family:var(--display);font-weight:600;font-size:1.3rem;margin:0;text-wrap:balance}
 .label{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
@@ -151,8 +157,8 @@ textarea{resize:vertical;min-height:70px;width:100%}
   <header>
     <div>
       <p class="school">The Indian High School <span class="engine" id="engine">Connecting…</span></p>
-      <h1>Pasum<span>AI</span></h1>
-      <p class="tag"><strong>பசுமை</strong> (pasumai) means greenness in Tamil. Your school's AI helper for saving electricity, cutting paper waste and keeping campus clean.</p>
+      <h1 class="brand"><svg class="logo" viewBox="0 0 48 48" aria-hidden="true"><path class="lf" d="M24 4C13 10 7 19 7 28c0 9 7.6 16 17 16s17-7 17-16C41 19 35 10 24 4Z"/><path class="vn" d="M24 42V16M24 30l-7-6M24 24l7-6"/><circle class="nd" cx="17" cy="24" r="2.6"/><circle class="nd" cx="31" cy="18" r="2.6"/><circle class="nd" cx="24" cy="14" r="2.6"/></svg><span class="wm">Pasum<span>AI</span></span></h1>
+      <p class="tag">Your school's AI helper for saving electricity, cutting paper waste and keeping campus clean.</p>
     </div>
     <div class="controls">
       <div class="seg" role="group" aria-label="Age group">
@@ -202,7 +208,7 @@ textarea{resize:vertical;min-height:70px;width:100%}
     </section>
 
     <section class="panel" aria-labelledby="snap-h">
-      <div class="panel-head"><h2 id="snap-h">Snap &amp; Sort</h2><span class="label">AI image check</span></div>
+      <div class="panel-head"><h2 id="snap-h">Snap &amp; Sort</h2><span class="label">Photo · bin finder</span></div>
       <p class="note">Take a photo of any rubbish. PasumAI works out which bin it goes in and how it could be reused.</p>
       <label class="drop" id="drop" for="photo">
         <img id="preview-img" alt="Your photo" hidden>
@@ -223,7 +229,7 @@ textarea{resize:vertical;min-height:70px;width:100%}
 
   <div class="grid even">
     <section class="panel" aria-labelledby="log-h">
-      <div class="panel-head"><h2 id="log-h">Log an eco action</h2><span class="label">AI scores it</span></div>
+      <div class="panel-head"><h2 id="log-h">Log an eco action</h2><span class="label">Points check</span></div>
       <div class="field">
         <label for="act">What did you do to help the school go green?</label>
         <textarea id="act" placeholder="e.g. I switched off the lights and fans in the empty computer lab after lunch"></textarea>
@@ -306,26 +312,26 @@ const ISSUES = [
 const FIX_POINTS = 3;
 
 // const SCHOOL = "The student's school is The Indian High School. Its four houses are Ruby, Emerald, Topaz and Sapphire, and students earn house points for eco actions.";
-const SCHOOL = "The student's school is The Indian High School. Its four houses are Ruby, Emerald, Topaz and Sapphire, and students earn house points for eco actions. Always reply in simple English only. Do not use Tamil or any other language, and do not use greetings like Vanakkam, even though your name comes from a Tamil word. Never use ** or # symbols.";
+const SCHOOL = "The student's school is The Indian High School. Its four houses are Ruby, Emerald, Topaz and Sapphire, and students earn house points for eco actions. Always reply in simple English only. Do not use any other language or non-English greetings. Write plain text only. Never use ** or # symbols.";
 const POINT_RULES = "Small everyday actions (switching off one light, putting a bottle in the right bin) get 1-3 points. Actions that take real effort get 4-7 points. Actions that involve organising or teaching others get 8-10 points.";
 const MODES = {
   junior: {
     label: "Junior mode · learn",
-    hello: "Hi! I'm PasumAI 🌱 My name means \"greenness\" in Tamil. Want to hear a fun fact about recycling?",
+    hello: "Hi! I'm PasumAI 🌱 Want to hear a fun fact about recycling?",
     chips: ["Why should I switch off the lights?", "Tell me a fun fact about paper", "Give me a quiz!"],
-    rules: "You are PasumAI (from the Tamil word pasumai, meaning greenness), a friendly eco helper for children aged 6-9. " + SCHOOL + " Use very short, simple sentences and a cheerful tone. Teach ONE idea at a time about saving electricity, saving paper or keeping the school clean. Use small stories or comparisons kids understand. You may offer a 2-question quiz. Never ask for personal information. Keep replies under 60 words."
+    rules: "You are PasumAI, a friendly eco helper for children aged 6-9. " + SCHOOL + " Use very short, simple sentences and a cheerful tone. Teach ONE idea at a time about saving electricity, saving paper or keeping the school clean. Use small stories or comparisons kids understand. You may offer a 2-question quiz. Never ask for personal information. Keep replies under 60 words."
   },
   middle: {
     label: "Middle mode · earn points",
     hello: "Hey! I'm PasumAI. Ask me for an eco challenge and earn points for your house. Which house are you in?",
     chips: ["Give me a challenge for today", "How can our class use less paper?", "Is this worth points: I turned off the AC in an empty room"],
-    rules: "You are PasumAI (from the Tamil word pasumai, meaning greenness), an eco coach for students aged 10-13. " + SCHOOL + " give a rough points estimate using these rules: " + POINT_RULES + " Always say it is only an estimate and that the 'Log an eco action' box gives the final score. If they mention a problem like lights left on, tell them to use 'Report a problem'. Be encouraging and a little playful. Never ask for personal information. Keep replies under 90 words."
+    rules: "You are PasumAI, an eco coach for students aged 10-13. " + SCHOOL + " Suggest small, doable challenges about saving electricity, reducing paper and keeping campus clean. When a student describes an eco action, give a rough points estimate using these rules: " + POINT_RULES + " Always say it is only an estimate and that the 'Log an eco action' box gives the final score. If they mention a problem like lights left on, tell them to use 'Report a problem'. Be encouraging and a little playful. Never ask for personal information. Keep replies under 90 words."
   },
   senior: {
     label: "Senior mode · lead",
     hello: "Hi, I'm PasumAI. I can help you plan a campaign for your house, write a notice for juniors, or work out the impact of an idea. What would you like to work on?",
     chips: ["Plan a 2-week paper-saving campaign for my house", "Write a poster message for Grade 2", "Estimate the energy saved by switching off 30 fans for 1 hour"],
-    rules: "You are PasumAI (from the Tamil word pasumai, meaning greenness), an assistant for senior students aged 14-17 who lead their school's sustainability efforts. " + SCHOOL + " Help them plan campaigns, write messages for younger students, and estimate impact with clear, simple calculations (show the numbers and state assumptions). Be practical and concise, using short bullet points when helpful. Keep replies under 150 words."
+    rules: "You are PasumAI, an assistant for senior students aged 14-17 who lead their school's sustainability efforts. " + SCHOOL + " Help them plan campaigns, write messages for younger students, and estimate impact with clear, simple calculations (show the numbers and state assumptions). Be practical and concise, using short bullet points when helpful. Keep replies under 150 words."
   }
 };
 const AGE_NOTE = {junior:"Write for a 7-year-old.", middle:"Write for an 11-year-old.", senior:"Write for a 15-year-old."};
@@ -666,6 +672,12 @@ function pickPhoto(file){
   $("sort").disabled = !hasAI();
   $("result").innerHTML = "";
 }
+function clearPhoto(){
+  photoFile = null; $("photo").value = "";
+  const img = $("preview-img"); img.hidden = true; img.removeAttribute("src");
+  $("drop-text").innerHTML = "<strong>Choose another photo</strong> or drop it here";
+  $("sort").disabled = true;
+}
 $("photo").addEventListener("change", e => pickPhoto(e.target.files[0]));
 const drop = $("drop");
 drop.addEventListener("dragover", e => { e.preventDefault(); drop.classList.add("over"); });
@@ -690,7 +702,7 @@ If the photo does not show waste or an object, use {"item":"unknown","bin":"gene
     const card = el("div","result"); card.style.setProperty("--bin", bin.color);
     card.append(el("span","label",String(r.item || "Item")), el("span","binname",bin.name), el("p","",String(r.why || "")), el("p","","Tip: " + String(r.tip || "")));
     if (points > 0) claimButton(`Add +${points} to {house}`, house =>
-      saveAction({house, points, category:"clean", source:"snap", what:`Sorted ${String(r.item || "an item")} → ${bin.name}`}), card);
+      saveAction({house, points, category:"clean", source:"snap", what:`Sorted ${String(r.item || "an item")} → ${bin.name}`}).then(clearPhoto), card);
     out.appendChild(card);
   }catch(e){ out.innerHTML = ""; out.appendChild(el("p","note",errorText(e))); }
   finally{ $("sort").disabled = false; }
