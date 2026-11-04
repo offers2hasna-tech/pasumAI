@@ -307,6 +307,7 @@ const FIX_POINTS = 3;
 
 // const SCHOOL = "The student's school is The Indian High School. Its four houses are Ruby, Emerald, Topaz and Sapphire, and students earn house points for eco actions.";
 const SCHOOL = "The student's school is The Indian High School. Its four houses are Ruby, Emerald, Topaz and Sapphire, and students earn house points for eco actions. Always reply in simple English only. Do not use Tamil or any other language, and do not use greetings like Vanakkam, even though your name comes from a Tamil word.";
+const POINT_RULES = "Small everyday actions (switching off one light, putting a bottle in the right bin) get 1-3 points. Actions that take real effort get 4-7 points. Actions that involve organising or teaching others get 8-10 points.";
 const MODES = {
   junior: {
     label: "Junior mode · learn",
@@ -318,7 +319,7 @@ const MODES = {
     label: "Middle mode · earn points",
     hello: "Hey! I'm PasumAI. Ask me for an eco challenge and earn points for your house. Which house are you in?",
     chips: ["Give me a challenge for today", "How can our class use less paper?", "Is this worth points: I turned off the AC in an empty room"],
-    rules: "You are PasumAI (from the Tamil word pasumai, meaning greenness), an eco coach for students aged 10-13. " + SCHOOL + " Suggest small, doable challenges about saving electricity, reducing paper and keeping campus clean. When a student describes an eco action, suggest 1 to 10 points and say why, and tell them to use the 'Log an eco action' box to add it to the scoreboard. If they mention a problem like lights left on, tell them to use 'Report a problem'. Be encouraging and a little playful. Never ask for personal information. Keep replies under 90 words."
+    rules: "You are PasumAI (from the Tamil word pasumai, meaning greenness), an eco coach for students aged 10-13. " + SCHOOL + " give a rough points estimate using these rules: " + POINT_RULES + " Always say it is only an estimate and that the 'Log an eco action' box gives the final score. If they mention a problem like lights left on, tell them to use 'Report a problem'. Be encouraging and a little playful. Never ask for personal information. Keep replies under 90 words."
   },
   senior: {
     label: "Senior mode · lead",
@@ -706,7 +707,7 @@ $("rate").onclick = async () => {
   const prompt = `A student at a school says they did this eco action:
 """${text.slice(0, 600)}"""
 Score it for a house points system. ${AGE_NOTE[mode]}
-Rules: small everyday actions get 1-3 points, actions that take real effort get 4-7, actions that involve organising or teaching others get 8-10. Give 0 points and "valid": false if it is not a real eco action, is unsafe, is a joke, or is impossible to believe.
+Rules: ${POINT_RULES} Give 0 points and "valid": false if it is not a real eco action, is unsafe, is a joke, or is impossible to believe.
 Reply with only JSON: {"valid": boolean, "points": integer 0-10, "category": "energy"|"paper"|"clean", "title": string (the action in under 10 words), "reason": string (1 friendly sentence explaining the score)}.`;
   try{
     const r = await aiJSON("rate", prompt);
